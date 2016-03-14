@@ -29,7 +29,7 @@ if (isset($input['type']) && $input['type'] != '') {
 		if ($result) {
             // 读取成功
             while ($row = $result->fetch_array(MYSQLI_NUM)) {
-                // $data[0] = strtotime($today) * 1000; // 将10位时间戳扩展成兼容JS的13位;
+                
                 $response[] = $row;
             }
 			echo jsonRemoveUnicodeSequences($response);
@@ -48,21 +48,23 @@ if (isset($input['type']) && $input['type'] != '') {
             // 读取成功
             $today = date('Y-m-d');
             $data = array();
-            $row = $result->fetch_array(MYSQLI_NUM);
+            $row = $result->fetch_array(MYSQLI_NUM);                // 获取第一行数据
             
             for ($i = 0; $i <= 6; $i++) {
-                $today = date('Y-m-d', strtotime('-'.$i.' day')); // 在today的基础上减一天
-                $data[0] = $today;
+                
+                $today = date('Y-m-d', strtotime('-'.$i.' day'));   // 在today的基础上减一天
                 $data[0] = strtotime($today) * 1000;
                 
-                // if (!strcmp($row[0],$today)) {
-                if (strtotime($row[0]) * 1000 == $data[0]) {
-                    $data[1] = $row[1];
-                    $row = $result->fetch_array(MYSQLI_NUM);
+                // if (!strcmp($row[0],$today)) {               // 字符串匹配
+                if (strtotime($row[0]) * 1000 == $data[0]) {    // 时间戳匹配
+                    $data[1] = $row[1];                         // 如果这行数据中有该日期，则赋值
+                    $row = $result->fetch_array(MYSQLI_NUM);    // 读取下一行数据
                 } else {
                     $data[1] = 0;
                 }
-                $response[] = $data;
+                
+                array_unshift($response, $data);                // 将数据由头插入数组，使时间按递增顺序
+                // $response[] = $row;                          // 尾插法
             }
 			echo jsonRemoveUnicodeSequences($response);
 		} else {
