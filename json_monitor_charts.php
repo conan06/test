@@ -99,43 +99,18 @@ if (isset($input['type']) && $input['type'] != '') {
         
     case 'thisyear':
         
-        $year = date('Y');
+        $year = date('Y');                                      // 获取年份
         $result = $db->getEachYearTransfer($year);
+        $thisYear = getMonthlyData($result);
         
-        if ($result) {                                                  // 读取成功
-            
-            $data = array();
-            $row = $result->fetch_array(MYSQLI_NUM);                    // 获取第一行数据
-            
-            for ($i = 1; $i <= 12; $i++) {
-                
-                $data[0] = $i;
-                
-                if (!strcmp($row[0],$data[0])) {                        // 字符串（月份）匹配
-                    
-                    $data[1] = $row[1] * !is_null($row);                // 如果这行数据中有该日期，则赋值；若为空，则置0
-                    $row = $result->fetch_array(MYSQLI_NUM);            // 读取下一行数据
-                    
-                } else {
-                    
-                    $data[1] = 0;
-                    
-                }
-                
-                // $data[0] = strtotime( date('Y-m-d',mktime(0,0,0,$i,1,$year)) ) * 1000;  // 每月1日转为时间戳并乘1000
-                $response[] = $data;
+        $db = new DB_Functions();                               // 再次初始化
+        $result = $db->getEachYearTransfer($year - 1);
+        $lastYear = getMonthlyData($result);
 
-            }
-            
-            echo jsonRemoveUnicodeSequences($response);
-            
-        } else {                                                        // 读取失败
-            
-            $response["error"] = TRUE;
-            $response["error_msg"] = "数据读取失败";
-            
-            echo jsonRemoveUnicodeSequences($response);
-        }
+        $response["thisyear"] = $thisYear;
+        $response["lastyear"] = $lastYear;
+
+        echo jsonRemoveUnicodeSequences($response);
         
         break;
         
@@ -231,5 +206,45 @@ function getHourlyData($str, $result) {
             
         echo jsonRemoveUnicodeSequences($response);
     }
+}
+
+/**
+ * Get hourly data
+ */
+function getMonthlyData($result) {
+    
+    if ($result) {                                                  // 读取成功
+            
+            $data = array();
+            $row = $result->fetch_array(MYSQLI_NUM);                    // 获取第一行数据
+            
+            for ($i = 1; $i <= 12; $i++) {
+                
+                $data[0] = $i;
+                
+                if (!strcmp($row[0],$data[0])) {                        // 字符串（月份）匹配
+                    
+                    $data[1] = $row[1] * !is_null($row);                // 如果这行数据中有该日期，则赋值；若为空，则置0
+                    $row = $result->fetch_array(MYSQLI_NUM);            // 读取下一行数据
+                    
+                } else {
+                    
+                    $data[1] = 0;
+                    
+                }
+                
+                $response[] = $data;
+
+            }
+            
+            return $response;
+            
+        } else {                                                        // 读取失败
+            
+            $response["error"] = TRUE;
+            $response["error_msg"] = "数据读取失败";
+            
+            echo jsonRemoveUnicodeSequences($response);
+        }
 }
 ?>

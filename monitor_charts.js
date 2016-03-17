@@ -59,7 +59,8 @@ $(function () {
                 max: 24 * 60 * 60 * 1000
             },
             yaxis: {
-                min: 0
+                min: 0,
+                tickDecimals: 0        // 小数点后保留0位，即取整
             }
         });
         
@@ -177,6 +178,9 @@ $(function () {
                 timeformat: "%b/%e",
                 min: (new Date(d.toLocaleDateString())).getTime() - 6 * millisecond,
                 max: (new Date(d.toLocaleDateString())).getTime()
+            },
+            yaxis: {
+                tickDecimals: 0,
             }
         });
         
@@ -235,16 +239,35 @@ $(function () {
 // 本年传输月份 - 全年平均值
 
 $(function () {
+    
     var data1 = [];
-    //var d = new Date();
+    var data2 = [];
     
     function onDataReceived(series) {
 
-        data1 = series;
+        data1 = series["lastyear"];
+        data2 = series["thisyear"];
         var plot = $.plot($("#data-within-a-year"),
         [	
             { 
                 data: data1,
+                lines: {
+                    show: true, 
+                    fill: false,
+                    lineWidth: 2
+                },
+                points: {
+                    show: true,
+                    radius: 2.5,
+                    fill: true,
+                    fillColor: "#ffffff",
+                    symbol: "circle",
+                    lineWidth: 1.1
+                },
+                label: "上年度"
+            },
+            { 
+                data: data2,
                 lines: {
                     show: true, 
                     fill: true,
@@ -259,26 +282,24 @@ $(function () {
                     symbol: "circle",
                     lineWidth: 1.1
                 },
-                label: "今年"
+                label: "本年度"
             }
         ],
         {
-            colors: ["#1aacf0", "#993eb7"],
+            colors: ["#993eb7", "#1aacf0"],
             shadowSize: 0,
             grid: {
                 borderWidth: 0,
                 hoverable: true
             },
             xaxis: {
-                //mode: "time",
-                //timezone: "browser",
-                //tickSize: [1, "month"],
-                //monthNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
-                //min: (new Date(d.getFullYear(),0,1)).getTime(),                                     // 今年1月1日
-                //max: (new Date(d.getFullYear(),11,1)).getTime()                                     // 今年12月1日
                 tickSize: 1,
+                tickDecimals: 0,
                 min: 1,
                 max: 12
+            },
+            yaxis: {
+                tickDecimals: 0
             }
         });
         
