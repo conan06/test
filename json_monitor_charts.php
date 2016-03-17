@@ -13,64 +13,39 @@ $response = array();
 
 // 因 json_encode($response) 缺少对中文的支持，因此需要做修改
 function jsonRemoveUnicodeSequences($struct) {
-	return preg_replace("/\\\\u([a-f0-9]{4})/e", "iconv('UCS-4LE','UTF-8',pack('V', hexdec('U$1')))", json_encode($struct));
+    return preg_replace("/\\\\u([a-f0-9]{4})/e", "iconv('UCS-4LE','UTF-8',pack('V', hexdec('U$1')))", json_encode($struct));
 }
 
-// 网口配置（ethernet）
 if (isset($input['type']) && $input['type'] != '') {
-	
-	// 获取参数
+    
+    // 获取参数
     $type = $input['type'];
-	
-	if ($type == 'last24hrs') {
-		
-        $result = $db->getWithinDayTransfer();
-		
-		if ($result) {
-            // 读取成功
-            $data = array();
-            $row = $result->fetch_array(MYSQLI_NUM);
-            
-            for ($i = 0; $i <= 24; $i++) {
-                
-                $data[0] = $i * 60 * 60 * 1000;
-                
-                // if (!strcmp($row[0],$i)) {                   // 字符串匹配
-                if ($row[0] * 60 * 60 * 1000 == $data[0]) {     // 时间戳匹配
-                    
-                    $data[1] = $row[1] * !is_null($row);        // 如果这行数据中有该日期，则赋值；若为空，则置0
-                    $row = $result->fetch_array(MYSQLI_NUM);    // 读取下一行数据
-                    
-                } else {
-                    
-                    $data[1] = 0;
-                    
-                }
-                
-                $response[] = $data;                            // 将数据由头插入数组，使时间按递增顺序
+    
+    switch($type){
+    
+    case 'todayhrs':                                            // 当天每时段传输数据
+        
+        $result = $db->getTodayHourlyTransfer();
+        $todayHourly = getHourlyData("today", $result);
+        
+        $db = new DB_Functions();                               // 再次初始化
+        $result = $db->getAllHourlyTransfer();
+        $allHourly = getHourlyData("all", $result);
 
-            }
-            
-            $response[24][1] = $response[0][1];
+        $response = array_merge($todayHourly, $allHourly);      // 合并两个数组
 
-			echo jsonRemoveUnicodeSequences($response);
-            
-		} else {
-			// 读取失败
-			$response["error"] = TRUE;
-			$response["error_msg"] = "数据读取失败";
-            
-			echo jsonRemoveUnicodeSequences($response);
-		}
-	} else 
-    if ($type == 'lastweek') {
+        echo jsonRemoveUnicodeSequences($response);
+        
+        break;
+
+    case 'lastweek':
         
         $concrete = array();
         $average = array();
-		$result = $db->getLastWeekTransfer();
-		
-		if ($result) {
-            // 读取成功
+        $result = $db->getLastWeekTransfer();
+        
+        if ($result) {                                              // 读取成功
+            
             $today = date('Y-m-d');
             $data = array();
             $totality = 0;
@@ -94,55 +69,167 @@ if (isset($input['type']) && $input['type'] != '') {
                     
                 }
                 
-                array_unshift($concrete, $data);                    // 将数据由头插入数组，使时间按递增顺序
+                array_unshift($concrete, $data);                    // 将数据由头插入concrete数组，使时间按递增顺序
 
             }
             
-            $totality /= 7;
+            $totality /= 7;                                         // 计算平均值
                 
             for ($i = 0; $i < 2; $i++) {
                 
                 $data[0] = strtotime($today) * 1000;
                 $data[1] = round($totality, 2);
                 $today = date('Y-m-d');
-                $average[] = $data;                                 // 尾插法
+                $average[] = $data;                                 // 尾插法将均值插入数组average中
                 
             }
             
             $response["concrete"] = $concrete;
             $response["average"] = $average;
 
-		} else {
-			// 读取失败
-			$response["error"] = TRUE;
-			$response["error_msg"] = "数据读取失败";
+        } else {                                                    // 读取失败
             
-		}
+            $response["error"] = TRUE;
+            $response["error_msg"] = "数据读取失败";
+            
+        }
         echo jsonRemoveUnicodeSequences($response);
         
-    } else 
-    if($type == 'thisyear') {
+        break;
         
-        $result = $db->getWithinDayTransfer();
-		
-		if ($result) {
-            // 读取成功
+    case 'thisyear':
+        
+        $year = date('Y');
+        $result = $db->getEachYearTransfer($year);
+        
+        if ($result) {                                                  // 读取成功
+            
+            $data = array();
+            $row = $result->fetch_array(MYSQLI_NUM);                    // 获取第一行数据
+            
+            for ($i = 1; $i <= 12; $i++) {
+                
+                $data[0] = $i;
+                
+                if (!strcmp($row[0],$data[0])) {                        // 字符串（月份）匹配
+                    
+                    $data[1] = $row[1] * !is_null($row);                // 如果这行数据中有该日期，则赋值；若为空，则置0
+                    $row = $result->fetch_array(MYSQLI_NUM);            // 读取下一行数据
+                    
+                } else {
+                    
+                    $data[1] = 0;
+                    
+                }
+                
+                // $data[0] = strtotime( date('Y-m-d',mktime(0,0,0,$i,1,$year)) ) * 1000;  // 每月1日转为时间戳并乘1000
+                $response[] = $data;
+
+            }
+            
+            echo jsonRemoveUnicodeSequences($response);
+            
+        } else {                                                        // 读取失败
+            
+            $response["error"] = TRUE;
+            $response["error_msg"] = "数据读取失败";
+            
+            echo jsonRemoveUnicodeSequences($response);
+        }
+        
+        break;
+        
+    case 'test':
+        
+        $result = $db->getThisYearTransfer();
+        
+        if ($result) {                                              // 读取成功
+            
             while ($row = $result->fetch_array(MYSQLI_NUM)) {
                 
                 $response[] = $row;
             }
-			echo jsonRemoveUnicodeSequences($response);
-		} else {
-			// 读取失败
-			$response["error"] = TRUE;
-			$response["error_msg"] = "数据读取失败";
+            echo jsonRemoveUnicodeSequences($response);
+        } else {                                                    // 读取失败
             
-			echo jsonRemoveUnicodeSequences($response);
-		}
+            $response["error"] = TRUE;
+            $response["error_msg"] = "数据读取失败";
+            
+            echo jsonRemoveUnicodeSequences($response);
+        }
+        
+        break;
+    
+    default:
+        
+        $response["error"] = TRUE;
+        $response["error_msg"] = "不存在该参数";
+        echo jsonRemoveUnicodeSequences($response);
+        
+        break;
     }
 } else {
-		$response["error"] = TRUE;
-		$response["error_msg"] = "缺少参数";
-		echo jsonRemoveUnicodeSequences($response);
+        $response["error"] = TRUE;
+        $response["error_msg"] = "缺少数据参数";
+        echo jsonRemoveUnicodeSequences($response);
+}
+
+/**
+ * Get hourly data
+ */
+function getHourlyData($str, $result) {
+    
+    if ($result) {                                          // 读取成功
+            
+        $data = array();
+        $hourly = array();
+        $concrete = array();
+        $average = array();
+        $totality = 0;
+        $row = $result->fetch_array(MYSQLI_NUM);
+        
+        for ($i = 0; $i <= 24; $i++) {
+            
+            $data[0] = $i * 60 * 60 * 1000;
+            
+            // if (!strcmp($row[0],$i)) {                   // 字符串匹配
+            if ($row[0] * 60 * 60 * 1000 == $data[0]) {     // 时间戳匹配
+                
+                $data[1] = $row[1] * !is_null($row);        // 如果这行数据中有该日期，则赋值；若为空，则置0
+                $totality += $row[1] * !is_null($row);      // 累加总数；若为空，则置0
+                $row = $result->fetch_array(MYSQLI_NUM);    // 读取下一行数据
+                
+            } else {
+                
+                $data[1] = 0;
+                
+            }
+            
+            $concrete[] = $data;                            // 将数据由头插入数组，使时间按递增顺序
+        }
+       
+        $concrete[24][1] = $concrete[0][1];
+        
+        $totality /= 24;                                    // 计算平均值
+                
+        for ($i = 0; $i <= 24; $i+=24) {
+                
+            $data[0] = $i * 60 * 60 * 1000;
+            $data[1] = round($totality, 2);
+            $average[] = $data;                             // 尾插法将均值插入数组average中
+                
+        }
+        
+        $hourly[$str] = $concrete;
+        $hourly[''.$str.'_average'] = $average;
+        return $hourly;
+            
+    } else {
+        // 读取失败
+        $response["error"] = TRUE;
+        $response["error_msg"] = "数据读取失败";
+            
+        echo jsonRemoveUnicodeSequences($response);
+    }
 }
 ?>

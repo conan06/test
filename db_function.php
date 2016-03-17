@@ -74,9 +74,9 @@ class DB_Functions {
     }
     
     /**
-     * Get transfer data hourly within 24 hours from monitor_history table
+     * Get hourly transfer data in this day from monitor_history table
      */
-    public function getWithinDayTransfer() {
+    public function getTodayHourlyTransfer() {
         
         $query = "SELECT HOUR( historyTimeDone ) AS hours, COUNT( HOUR( historyTimeDone ) ) AS sum
                 FROM `monitor_history` 
@@ -86,7 +86,7 @@ class DB_Functions {
     }
     
     /**
-     * Get transfer data hourly all the time from monitor_history table
+     * Get hourly transfer data all the time from monitor_history table
      */
     public function getAllHourlyTransfer() {
         
@@ -109,5 +109,28 @@ class DB_Functions {
         return self::getData($query);
     }
     
+    /**
+     * Get each year transfer data from monitor_history table
+     */
+    public function getEachYearTransfer($arg) {
+        
+        $query = "SELECT MONTH( historyTimeDone ) AS months, COUNT( MONTH( historyTimeDone ) ) AS sum
+                FROM `monitor_history` 
+                WHERE YEAR( historyTimeDone ) =  ".$arg."
+                GROUP BY MONTH( historyTimeDone ) ";
+        return self::getData($query);
+    }
+    
+    /**
+     * Get filename extension from monitor_history table
+     */
+    public function getFilenameExtension() {
+        
+        $query = "SELECT SUBSTRING_INDEX(historyFileName, '.', -1) AS extension, COUNT( SUBSTRING_INDEX(historyFileName, '.', -1) ) AS sum
+                FROM `monitor_history`
+                GROUP BY SUBSTRING_INDEX(historyFileName, '.', -1) 
+                ORDER BY SUBSTRING_INDEX(historyFileName, '.', -1) ASC";
+        return self::getData($query);
+    }
 }
 ?>
