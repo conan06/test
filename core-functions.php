@@ -280,13 +280,18 @@ function dt_get_thumb_img( $opts = array() ) {
 	$_width = $resized_image[1];
 	$_height = $resized_image[2];
 
+    
+    ////////////////////////Conan06///////////////////////
+    
     if ($_width <=150 || $_height <= 150) {
         $info = pathinfo( $resized_image[0] );
         $ext = $info['extension'];
         $filename = str_replace( '.' . $ext, '', $info['basename'] );
         $filepath = $info['dirname'];
-        $destfilename = "{$filepath}/{$filename}-150x150.{$ext}";
-        $src = $destfilename;
+        if (!strpos($filename,"150x150")) {         // check the filename include 150x150 or not 
+            $destfilename = "{$filepath}/{$filename}-150x150.{$ext}";
+            $src = $destfilename;
+        }
     }
     
 	if ( empty($resized_image[3]) || !is_string($resized_image[3]) ) {
@@ -1293,7 +1298,7 @@ function dt_validate_gravatar($id_or_email) {
 	}
  
 	$hashkey = md5(strtolower(trim($email)));
-	$uri = 'http://www.gravatar.com/avatar/' . $hashkey . '?d=404';
+	$uri = 'http://cdn.v2ex.com/gravatar/' . $hashkey . '?d=404';
  
 	$data = wp_cache_get($hashkey);
 	if (false === $data) {
