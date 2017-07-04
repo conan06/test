@@ -1,71 +1,31 @@
-========µ¼Ê¦ÆÀ¼Û¡¢×¨ÒµÆÀ¼Û========
+// å¯¼å¸ˆè¯„ä»·ã€ä¸“ä¸šè¯„ä»·
 
 var forms = document.getElementById("maindiv");
-
 var tds = forms.getElementsByClassName("div_table_radio_question");
-
 var radios = [];
 
-
-
 for (var i = 0; i < tds.length; i++) {
-
   if (tds[i].getElementsByClassName("tdclass").length > 0)
-
     radios.push(tds[i]);
-
 }
 
-
-
-radios.forEach( function(elm) {
-
-    elm.getElementsByTagName("input")[9].checked = true;
-
-});
-
-
-
+radios.forEach( elm => elm.getElementsByTagName("input")[9].checked = true; );
 forms.getElementsByTagName("textarea")[0].value="GOOD!";
-
-
-
 document.getElementById("submit_button").click();
 
 
-
-========¿Î³ÌÆÀ·Ö========
+// è¯¾ç¨‹è¯„åˆ†
 
 var forms = document.getElementsByClassName("toptable");
-
 var tds = forms[1].getElementsByTagName("td");
-
 var radios = [];
-
-
-
-for (var i = 0; i < tds.length; i++) {
-
-  if (tds[i].getElementsByClassName("spanW").length > 0)
-
-    radios.push(tds[i]);
-
-}
-
-
-
-radios.forEach( function(elm) {
-
-    elm.getElementsByClassName("spanW")[9].getElementsByTagName("input")[0].checked = true;
-
-});
-
-
-
 var textbox = document.getElementById("txt_remark");
 
+for (var i = 0; i < tds.length; i++) {
+  if (tds[i].getElementsByClassName("spanW").length > 0)
+    radios.push(tds[i]);
+}
+
+radios.forEach( elm => elm.getElementsByClassName("spanW")[9].getElementsByTagName("input")[0].checked = true; );
 textbox.innerHTML="GOOD!";
-
-
-
 document.getElementById("Submit1").click();
